@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NFC Scanner</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f8f8f8;
+      text-align: center;
+    }
+    #status {
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Please hold an NFC tag near the back of your phone...</div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+
+    async function scanNFC() {
+      if (!('NDEFReader' in window)) {
+        statusEl.textContent = "NFC not supported on this device or browser.";
+        return;
+      }
+
+      try {
+        const reader = new NDEFReader();
+        await reader.scan();
+        statusEl.textContent = "Scanning...";
+
+        reader.onreading = (event) => {
+          const tagId = event.serialNumber || 'UNKNOWN_TAG';
+          statusEl.textContent = "Tag scanned: " + tagId;
+
+          // Redirect to your Adalo create item screen
+          // Replace URL below with your Adalo screen link
+          window.location.href = `https://your-adalo-app.adalo.site/create-item?tag=${tagId}`;
+        };
+      } catch (error) {
+        statusEl.textContent = "Error scanning NFC: " + error;
+      }
+    }
+
+    scanNFC();
+  </script>
+</body>
+</html>
