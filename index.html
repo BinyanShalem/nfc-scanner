@@ -1,54 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>NFC Scanner</title>
+  <title>NFC Tag Scanner</title>
   <style>
     body {
       font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #f8f8f8;
       text-align: center;
+      padding: 50px;
+    }
+    #scanBtn {
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #scanBtn:hover {
+      background-color: #45a049;
     }
     #status {
-      font-size: 1.2rem;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <div id="status">Please hold an NFC tag near the back of your phone...</div>
+  <h1>Scan NFC Tag</h1>
+  <p>Tap your NFC tag to the back of your phone.</p>
+  <button id="scanBtn">Start Scan</button>
+  <p id="status"></p>
 
   <script>
-    const statusEl = document.getElementById('status');
+    const status = document.getElementById('status');
+    const scanBtn = document.getElementById('scanBtn');
 
-    async function scanNFC() {
-      if (!('NDEFReader' in window)) {
-        statusEl.textContent = "NFC not supported on this device or browser.";
-        return;
+    scanBtn.onclick = async () => {
+      if ('NDEFReader' in window) {
+        try {
+          const ndef = new NDEFReader();
+          await ndef.scan();
+          status.innerText = 'Waiting for NFC tag...';
+
+          ndef.onreading = event => {
+            const message = event.message;
+            let tagContent = '';
+
+            for (const record of message.records) {
+              if (record.recordType === 'text') {
+                const textDecoder = new TextDecoder(record.encoding);
+                tagContent = textDecoder.decode(record.data);
+              }
+            }
+
+            if (!tagContent) {
+              status.innerText = 'No text record found on tag.';
+              return;
+            }
+
+            // Redirect to Adalo app with tag in URL
+            window.location.href = `https://your-adalo-app.com/additem?tag=${encodeURIComponent(tagContent)}`;
+          };
+
+          ndef.onerror = () => {
+            status.innerText = 'Error reading NFC tag.';
+          };
+        } catch (error) {
+          status.innerText = 'Error starting NFC scan: ' + error;
+        }
+      } else {
+        status.innerText = 'Web NFC not supported on this device.';
       }
-
-      try {
-        const reader = new NDEFReader();
-        await reader.scan();
-        statusEl.textContent = "Scanning...";
-
-        reader.onreading = (event) => {
-          const tagId = event.serialNumber || 'UNKNOWN_TAG';
-          statusEl.textContent = "Tag scanned: " + tagId;
-
-          // Redirect to your Adalo create item screen
-          // Replace URL below with your Adalo screen link
-          window.location.href = `saul-settons-team.adalo.com/clothing-tracking-app-app/Add-Item={"tag":"${tagId}"}`;
-        };
-      } catch (error) {
-        statusEl.textContent = "Error scanning NFC: " + error;
-      }
-    }
-
-    scanNFC();
+    };
   </script>
 </body>
 </html>
