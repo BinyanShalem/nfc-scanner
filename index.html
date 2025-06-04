@@ -9,18 +9,6 @@
       text-align: center;
       padding: 50px;
     }
-    #scanBtn {
-      padding: 15px 30px;
-      font-size: 18px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #scanBtn:hover {
-      background-color: #45a049;
-    }
     #status {
       margin-top: 20px;
     }
@@ -29,14 +17,12 @@
 <body>
   <h1>Scan NFC Tag</h1>
   <p>Tap your NFC tag to the back of your phone.</p>
-  <button id="scanBtn">Start Scan</button>
   <p id="status"></p>
 
   <script>
     const status = document.getElementById('status');
-    const scanBtn = document.getElementById('scanBtn');
 
-    scanBtn.onclick = async () => {
+    async function startNFCScan() {
       if ('NDEFReader' in window) {
         try {
           const ndef = new NDEFReader();
@@ -59,7 +45,6 @@
               return;
             }
 
-            // Redirect to Adalo app with tag in URL
             window.location.href = `https://your-adalo-app.com/additem?tag=${encodeURIComponent(tagContent)}`;
           };
 
@@ -72,7 +57,12 @@
       } else {
         status.innerText = 'Web NFC not supported on this device.';
       }
-    };
+    }
+
+    // Attempt scan on load (may fail silently if no gesture)
+    window.addEventListener('load', () => {
+      startNFCScan();
+    });
   </script>
 </body>
 </html>
