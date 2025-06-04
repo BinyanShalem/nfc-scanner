@@ -1,67 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>NFC Tag Scanner</title>
+  <title>NFC Scanner</title>
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      padding: 50px;
+      padding: 40px;
+    }
+    #startScan {
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
     #status {
       margin-top: 20px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h1>Scan NFC Tag</h1>
-  <p>Tap your NFC tag to the back of your phone.</p>
-  <p id="status"></p>
+  <h1>NFC Tag Scanner</h1>
+  <button id="startScan">Start Scan</button>
+  <div id="status"></div>
 
   <script>
-    const status = document.getElementById('status');
+    document.getElementById("startScan").addEventListener("click", async () => {
+      const status = document.getElementById("status");
+      status.textContent = "Preparing to scan... please allow NFC permission and hold tag near your phone.";
 
-    async function startNFCScan() {
-      if ('NDEFReader' in window) {
-        try {
-          const ndef = new NDEFReader();
-          await ndef.scan();
-          status.innerText = 'Waiting for NFC tag...';
-
-          ndef.onreading = event => {
-            const message = event.message;
-            let tagContent = '';
-
-            for (const record of message.records) {
-              if (record.recordType === 'text') {
-                const textDecoder = new TextDecoder(record.encoding);
-                tagContent = textDecoder.decode(record.data);
-              }
-            }
-
-            if (!tagContent) {
-              status.innerText = 'No text record found on tag.';
-              return;
-            }
-
-            window.location.href = `https://your-adalo-app.com/additem?tag=${encodeURIComponent(tagContent)}`;
-          };
-
-          ndef.onerror = () => {
-            status.innerText = 'Error reading NFC tag.';
-          };
-        } catch (error) {
-          status.innerText = 'Error starting NFC scan: ' + error;
-        }
-      } else {
-        status.innerText = 'Web NFC not supported on this device.';
+      if (!("NDEFReader" in window)) {
+        status.textContent = "Web NFC is not supported on this device/browser.";
+        return;
       }
-    }
 
-    // Attempt scan on load (may fail silently if no gesture)
-    window.addEventListener('load', () => {
-      startNFCScan();
+      try {
+        const ndef = new NDEFReader();
+        await ndef.scan();
+
+        status.textContent = "NFC scan started. Waiting for tag...";
+
+        ndef.onreading = event => {
+          const decoder = new TextDecoder();
+          const records = event.message.records;
+          if (records.length > 0) {
+            const data = decoder.decode(records[0].data);
+            status.textContent = "NFC Tag Data: " + data;
+          } else {
+            status.textContent = "NFC tag read, but no records found.";
+          }
+        };
+      } catch (error) {
+        console.error("NFC Scan error:", error);
+        status.textContent = "Error: " + error.message;
+      }
     });
   </script>
 </body>
